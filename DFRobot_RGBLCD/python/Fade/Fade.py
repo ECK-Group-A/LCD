@@ -12,16 +12,16 @@ def breath(color):
     lcd.setPWM(color, i)
     time.sleep(0.005)
     
-  time.sleep(0.5)
+  time.sleep(0.1)
   for i in range(254,0,-1):
     lcd.setPWM(color, i)
     time.sleep(0.005)
 
-  time.sleep(0.5)
+  time.sleep(0.1)
 
 
 lcd=rgb1602.RGB1602(16,2)                               #create LCD object,specify col and row
-lcd.printout("fade demo")
+lcd.printout("rave demo")
 
 
 while True:
