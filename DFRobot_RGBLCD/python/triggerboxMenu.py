@@ -54,7 +54,7 @@ def updateTimeTask():
     print("Update time and date is broken")
     print(e)
 
-def updateSystemctl():
+def updateSystemctlTask():
   try:
     subprocess.run("systemctl is-active --quiet triggerbox", shell=True, check=True)
     tbboxvalbox.setMessage("Active")
@@ -68,17 +68,20 @@ def updateSystemctl():
 
 mainMenuList = []
 menuIndex = 0
+looping = True
 def menuLoop(direction):
-  global menuIndex
-  menuIndex = menuIndex + direction
-  if menuIndex > len(mainMenuList)-1:
-    menuIndex = 0
-  if menuIndex < 0:
-    menuIndex = len(mainMenuList)-1
-  
+  if looping == True:
+    global menuIndex
+    menuIndex = menuIndex + direction
+    if menuIndex > len(mainMenuList)-1:
+      menuIndex = 0
+    if menuIndex < 0:
+      menuIndex = len(mainMenuList)-1
+
+
 #setting up menu stuff
 
-timeMenu = Menu("timeMenu")
+timeMenu = Menu()
 timebox = Printbox(0, 0, 7)# line, begin, end
 datebox = Printbox(1, 0, 7)# line, begin, end
 datevalbox = Printbox(0, 8, 15)
@@ -90,7 +93,7 @@ timeMenu.addPrintbox(datebox)
 timeMenu.addPrintbox(timevalbox)
 timeMenu.addPrintbox(datevalbox)
 
-systemctlMenu = Menu("systemctlMenu")
+systemctlMenu = Menu()
 tbbox = Printbox(0, 0, 9)
 ntpbox = Printbox(1, 0, 9)
 tbboxvalbox = Printbox(0, 10, 15)
@@ -102,17 +105,23 @@ systemctlMenu.addPrintbox(ntpbox)
 systemctlMenu.addPrintbox(tbboxvalbox)
 systemctlMenu.addPrintbox(ntpvalbox)
 
+flashMenu = Menu()
+l1box = Printbox(0, 0, 15)
+l2box = Printbox(0, 1, 15)
+flashMenu.addPrintbox(l1box)
+flashMenu.addPrintbox(l2box)
+
 #menu order
 mainMenuList.append(timeMenu)
 mainMenuList.append(systemctlMenu)
 
 #task stuff
 schedule.every(1).seconds.do(updateTimeTask).tag('menuTask')
-schedule.every(10).seconds.do(updateSystemctl).tag('menuTask')
+schedule.every(10).seconds.do(updateSystemctlTask).tag('menuTask')
 schedule.every(6).seconds.do(menuLoop, 1)
 
 #main loop
-updateSystemctl()
+updateSystemctlTask()
 updateTimeTask()
 while True:
   schedule.run_pending()
@@ -120,10 +129,16 @@ while True:
   currentMenu.display()
   if currentMenu in mainMenuList: #cycle throug main menu
     if read_LCD_buttons() == btnRIGHT: #skip to next menu
-      menuLoop(1)   
-      time.sleep(0.1)
+      looping = True # resume the main menu loop
+      menuLoop(1)
+      time.sleep(0.2)  
     if read_LCD_buttons() == btnLEFT: #previous menu
-      menuLoop(-1)  
-      time.sleep(0.1)
+      looping = True # resume the main menu loop
+      menuLoop(-1)   
+      time.sleep(0.2)
+    if read_LCD_buttons() == btnSELECT: 
+      looping = False #freezes the menu for monitoring or further action
+
+
 
 
