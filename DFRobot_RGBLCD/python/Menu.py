@@ -14,9 +14,12 @@ class Menu:
   def addPrintbox(self, pb):
     self.printBoxes.append(pb)
 
-  def display(self):
-    for pb in self.printBoxes:
-      pb.display()
+  def display(self, optionsFlag):
+    if optionsFlag == True:
+      self.optionsMenu.display()
+    else:
+      for pb in self.printBoxes:
+        pb.display()
 
   def setOptionsMenu(self, ScrollMenu):
     self.optionsMenu = ScrollMenu
@@ -42,7 +45,7 @@ class Option:
 class ScrollMenu:
   def __init__(self):
     self.l1 = Printbox(0, 0, 14)
-    self.l2 = Printbox(1, 0, 14)
+    self.l2 = Printbox(1, 0, 15)
     self.selector = Printbox(0 , 15, 15)
     self.selector.setMessage("<")
     self.options = [Option(" ")]
@@ -55,10 +58,11 @@ class ScrollMenu:
     self.index = self.index + increment
     if self.index < 0:
       self.index = 0
-    if self.index > len(self.options)-1:
-      self.index = len(self.options)-1
+    if self.index > len(self.options)-2:
+      self.index = len(self.options)-2
     self.l1.setMessage(self.options[self.index].name)
     self.l2.setMessage(self.options[self.index+1].name)
+    print("items: " + str(len(self.options)) + " index: " + str(self.index))
 
   def display(self):
     self.l1.display()

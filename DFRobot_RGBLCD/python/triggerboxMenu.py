@@ -79,7 +79,6 @@ def menuLoop(direction):
       menuIndex = len(mainMenuList)-1
 
 #setting up menu stuff
-
 timeMenu = Menu()
 timebox = Printbox(0, 0, 7)# line, begin, end
 datebox = Printbox(1, 0, 7)# line, begin, end
@@ -121,8 +120,8 @@ flashMenu.addPrintbox(l2box)
 def flash(line1, line2):
   l1box.setMessage(line1)
   l2box.setMessage(line2)
-  flashMenu.display()
-  time.sleep(1.5)
+  flashMenu.display(False)
+  time.sleep(1.0)
 
 #menu order
 mainMenuList.append(timeMenu)
@@ -136,6 +135,7 @@ schedule.every(6).seconds.do(menuLoop, 1)
 #main loop
 updateSystemctlTask()
 updateTimeTask()
+optionsMenuFlag = False
 while True:
   schedule.run_pending()
   currentMenu = mainMenuList[menuIndex]
@@ -144,16 +144,27 @@ while True:
       looping = True # resume the main menu loop
       menuLoop(1)
       time.sleep(0.2)  
+      optionsMenuFlag = False
     if read_LCD_buttons() == btnLEFT: #previous menu
       looping = True # resume the main menu loop
       menuLoop(-1)   
       time.sleep(0.2)
+      optionsMenuFlag = False
     if read_LCD_buttons() == btnSELECT:
       if looping == False:
+        flash("Showing options", "Use <> to resume")
         options = currentMenu.getOptionsMenu()
         options.setSelector(0)
-        options.display()
-        time.sleep(3)
+        optionsMenuFlag = True
+        continue
       looping = False #freezes the menu for monitoring or further action
       flash("Monitoring menu", "Use <> to resume")
-  currentMenu.display()
+    if read_LCD_buttons() == btnUP:
+      if looping == False and optionsMenuFlag == True:
+        options.setSelector(-1)
+      time.sleep(0.2)
+    if read_LCD_buttons() == btnDOWN:
+      if looping == False and optionsMenuFlag == True:
+        options.setSelector(1)
+      time.sleep(0.2)
+  currentMenu.display(optionsMenuFlag)
