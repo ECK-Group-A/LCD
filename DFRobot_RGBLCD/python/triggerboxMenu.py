@@ -81,7 +81,7 @@ def menuLoop(direction):
     if menuIndex < 0:
       menuIndex = len(mainMenuList)-1
 
-#setting up menu stuff
+#setting up time menu stuff
 timeMenu = Menu()
 timebox = Printbox(0, 0, 7)# line, begin, end
 datebox = Printbox(1, 0, 7)# line, begin, end
@@ -98,7 +98,7 @@ timeMenu.addPrintbox(datevalbox)
 systemctlOptions = ScrollMenu()
 restartNTP = Option("Restart NTP")
 restartTrigbox = Option("Restart T-box")
-adjustCamera1 = Option("C1 Degrees", 360, 1, 360, 0, 3)
+adjustCamera1 = Option("C1 Angle", 360, 1, 360.0, 0, 3)
 systemctlOptions.addOptions(restartNTP)
 systemctlOptions.addOptions(restartTrigbox)
 systemctlOptions.addOptions(adjustCamera1)
@@ -117,6 +117,32 @@ systemctlMenu.addPrintbox(ntpbox)
 systemctlMenu.addPrintbox(tbboxvalbox)
 systemctlMenu.addPrintbox(ntpvalbox)
 
+#camera scroll menu
+cameraOptions = ScrollMenu()
+adjustCamera1 = Option("C1 Angle", 0.0, 1.0, 360, 0, 5)
+adjustCamera2 = Option("C2 Angle", 60.0, 1.0, 360, 0, 5)
+adjustCamera3 = Option("C3 Angle", 180.0, 1.0, 360, 0, 5)
+adjustCamera4 = Option("C4 Angle", 240.0, 1.0, 360, 0, 5)
+adjustCamera5 = Option("C5 Angle", 300.0, 1.0, 360, 0, 5)
+adjustCamera6 = Option("C6 Angle", 360.0, 1.0, 360, 0, 5)
+cameraOptions.addOptions(adjustCamera1)
+cameraOptions.addOptions(adjustCamera2)
+cameraOptions.addOptions(adjustCamera3)
+cameraOptions.addOptions(adjustCamera4)
+cameraOptions.addOptions(adjustCamera5)
+cameraOptions.addOptions(adjustCamera6)
+
+#camera menu
+cameraMenu = Menu()
+cameraMenu.setScrollMenu(cameraOptions)
+camerasbox = Printbox(0, 0, 15)
+camerastatusbox = Printbox(1, 0, 15)
+camerasbox.setMessage("Camera status:")
+camerastatusbox.setMessage("-unimplemented-")
+cameraMenu.addPrintbox(camerasbox)
+cameraMenu.addPrintbox(camerastatusbox)
+
+
 #Flash menu function
 flashMenu = Menu()
 l1box = Printbox(0, 0, 15)
@@ -132,6 +158,7 @@ def flash(line1, line2):
 #main menu order list
 mainMenuList.append(timeMenu)
 mainMenuList.append(systemctlMenu)
+mainMenuList.append(cameraMenu)
 
 #options menu list
 optionsMenuList.append
@@ -146,6 +173,7 @@ updateSystemctlTask()
 updateTimeTask()
 optionsMenuFlag = False
 mainMenuFlag = True
+optionSelectedFlag = False
 
 while True:
   schedule.run_pending()
@@ -167,7 +195,7 @@ while True:
 
     if read_LCD_buttons() == btnSELECT:
       if loopingFlag == False:
-        flash("Showing options", "Use <> to resume")
+        flash("Showing options", "Use <> to return")
         options = currentMenu.getScrollMenu()
         options.setSelector(0)
         optionsMenuFlag = True
@@ -203,3 +231,28 @@ while True:
       time.sleep(0.2)
     currentMenu.display(True)
 
+    if read_LCD_buttons() == btnSELECT:
+      optionSelectedFlag = True
+      optionsMenuFlag = False
+      time.sleep(0.2)
+      continue
+
+  if optionSelectedFlag == True:
+    selected = currentMenu.scrollMenu.select()
+
+    if read_LCD_buttons() == btnLEFT:
+      selected.incrementValue(-1)
+      time.sleep(0.2)
+
+    if read_LCD_buttons() == btnRIGHT:
+      selected.incrementValue(1)
+      currentMenu.scrollMenu.update()
+      time.sleep(0.2)
+
+    if read_LCD_buttons() == btnSELECT:
+      optionsMenuFlag = True
+      optionSelectedFlag = False
+      time.sleep(0.2)
+      continue
+
+    currentMenu.display(True)

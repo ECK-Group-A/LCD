@@ -32,22 +32,34 @@ class Menu:
 class Option:
   def __init__(self, name, value = float("NaN"), increment = float("NaN"), uplim = float("NaN"), lowlim = float("NaN"), length = 3):
     self.name = name
+    self.tempName = name
     self.commands = []
 
     if not isNaN(value):
       self.value = value
+      self.length = length
       self.increment = increment
       self.uplim = uplim
       self.lowlim = lowlim
       self.valueBox = Printbox(0, 0, length-1)
-      self.valueBox.setMessage(str(value))
-      empty = "               "
-      spaceLeft = 15-len(self.name)-length
-      if spaceLeft < 0:
-        print("Not enough space between value and option name")
-      else:
-        self.name = self.name + empty[0:spaceLeft] + self.valueBox.getMessage()
-        
+      self.incrementValue(0)
+
+  def incrementValue(self, increment):
+    self.value = self.value + increment
+    if self.value > self.uplim:
+      self.value = self.lowlim
+
+    if self.value < self.lowlim:
+      self.value = self.uplim
+
+    self.valueBox.setMessage(str(self.value))
+    empty = "               "
+    spaceLeft = 15-len(self.tempName)-self.length
+    if spaceLeft < 0:
+      print("Not enough space between value and option name")
+    else:
+      self.name = self.tempName + empty[0:spaceLeft] + self.valueBox.getMessage() 
+
   def addCommand(self, command):
     commands.append(command)
 
@@ -57,14 +69,7 @@ class Option:
         subprocess.run(command, shell=True, check=True)
       except subprocess.CalledProcessError:
         pass
-
-  def select(self):
-    if isNaN(self.value):
-      execute()
-      return
     
-
-
 class ScrollMenu(Menu):
   def __init__(self):
     self.l1 = Printbox(0, 0, 14)
@@ -78,14 +83,17 @@ class ScrollMenu(Menu):
   def addOptions(self, option):
     self.options.insert(0, option)
 
+  def select(self):
+    return self.options[self.index + self.selectorLine]
+
   def setSelector(self, increment):
     #user wants to scroll down
     if increment > 0:
       #change index because cursor is at bottom
-      if self.selectorLine == 1:
+      if self.selectorLine == 1 and not len(self.options)-2 == self.index + self.selectorLine and len(self.options) > 1:
         self.index = self.index + increment
       #change cursor cause cursor is at top
-      elif self.selectorLine == 0 and len(self.options) > 2:
+      elif self.selectorLine == 0:
         self.selectorLine = 1
     
     #user wants to scroll up
@@ -111,6 +119,10 @@ class ScrollMenu(Menu):
     self.selector.setLine(self.selectorLine)
     self.l1.setMessage(self.options[self.index].name)
     self.l2.setMessage(self.options[self.index+1].name)
+
+  def update(self):
+    self.l1.setMessage(self.options[self.index].name)
+    self.l2.setMessage(self.options[self.index+1].name)    
 
   def display(self):
     self.l1.display()
