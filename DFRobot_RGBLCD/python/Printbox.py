@@ -33,6 +33,9 @@ class Printbox:
     def getLine(self):
         return self.line
 
+    def getMessage(self):
+        return self.message[0:self.end+1]
+
     def display(self):
         lcd.setCursor(self.begin, self.line)
         lcd.printout(self.message[0:self.end+1])

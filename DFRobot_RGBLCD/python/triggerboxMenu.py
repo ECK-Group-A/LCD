@@ -67,10 +67,13 @@ def updateSystemctlTask():
     ntpvalbox.setMessage("Failed")
 
 mainMenuList = []
+optionsMenuList = []
 menuIndex = 0
-looping = True
+loopingFlag = True
+
 def menuLoop(direction):
-  if looping == True:
+  global loopingFlag
+  if loopingFlag == True:
     global menuIndex
     menuIndex = menuIndex + direction
     if menuIndex > len(mainMenuList)-1:
@@ -95,12 +98,14 @@ timeMenu.addPrintbox(datevalbox)
 systemctlOptions = ScrollMenu()
 restartNTP = Option("Restart NTP")
 restartTrigbox = Option("Restart T-box")
+adjustCamera1 = Option("C1 Degrees", 360, 1, 360, 0, 3)
 systemctlOptions.addOptions(restartNTP)
 systemctlOptions.addOptions(restartTrigbox)
+systemctlOptions.addOptions(adjustCamera1)
 
 #systemctl menu
 systemctlMenu = Menu()
-systemctlMenu.setOptionsMenu(systemctlOptions)
+systemctlMenu.setScrollMenu(systemctlOptions)
 tbbox = Printbox(0, 0, 9)
 ntpbox = Printbox(1, 0, 9)
 tbboxvalbox = Printbox(0, 10, 15)
@@ -112,6 +117,7 @@ systemctlMenu.addPrintbox(ntpbox)
 systemctlMenu.addPrintbox(tbboxvalbox)
 systemctlMenu.addPrintbox(ntpvalbox)
 
+#Flash menu function
 flashMenu = Menu()
 l1box = Printbox(0, 0, 15)
 l2box = Printbox(1, 0, 15)
@@ -123,9 +129,12 @@ def flash(line1, line2):
   flashMenu.display(False)
   time.sleep(1.0)
 
-#menu order
+#main menu order list
 mainMenuList.append(timeMenu)
 mainMenuList.append(systemctlMenu)
+
+#options menu list
+optionsMenuList.append
 
 #task stuff
 schedule.every(1).seconds.do(updateTimeTask).tag('menuTask')
@@ -136,35 +145,61 @@ schedule.every(6).seconds.do(menuLoop, 1)
 updateSystemctlTask()
 updateTimeTask()
 optionsMenuFlag = False
+mainMenuFlag = True
+
 while True:
   schedule.run_pending()
   currentMenu = mainMenuList[menuIndex]
-  if currentMenu in mainMenuList: #cycle throug main menu
+
+  #The main menu state
+  if mainMenuFlag == True: 
     if read_LCD_buttons() == btnRIGHT: #skip to next menu
-      looping = True # resume the main menu loop
+      loopingFlag = True # resume the main menu loop
       menuLoop(1)
       time.sleep(0.2)  
       optionsMenuFlag = False
+
     if read_LCD_buttons() == btnLEFT: #previous menu
-      looping = True # resume the main menu loop
+      loopingFlag = True # resume the main menu loop
       menuLoop(-1)   
       time.sleep(0.2)
       optionsMenuFlag = False
+
     if read_LCD_buttons() == btnSELECT:
-      if looping == False:
+      if loopingFlag == False:
         flash("Showing options", "Use <> to resume")
-        options = currentMenu.getOptionsMenu()
+        options = currentMenu.getScrollMenu()
         options.setSelector(0)
         optionsMenuFlag = True
-        continue
-      looping = False #freezes the menu for monitoring or further action
+        mainMenuFlag = False
+        continue #skips to the options menu directly for a smoother transition since display isnt called
+
+      loopingFlag = False #freezes the menu for monitoring or further action
       flash("Monitoring menu", "Use <> to resume")
+
+    currentMenu.display(False)    #this is where the menu actually gets displayed for the mainmenu state
+
+
+  #The options menu state
+  if optionsMenuFlag == True:  
+    if read_LCD_buttons() == btnRIGHT or read_LCD_buttons() == btnLEFT: 
+      flash("Returning to", "main menu")
+      mainMenuFlag = True
+      optionsMenuFlag = False
+      loopingFlag = True
+      time.sleep(0.2)  
+      continue  #skips the display of the options menu for a smoother transition
+
     if read_LCD_buttons() == btnUP:
-      if looping == False and optionsMenuFlag == True:
+      if loopingFlag == False and optionsMenuFlag == True:
         options.setSelector(-1)
+
       time.sleep(0.2)
+
     if read_LCD_buttons() == btnDOWN:
-      if looping == False and optionsMenuFlag == True:
+      if loopingFlag == False and optionsMenuFlag == True:
         options.setSelector(1)
+
       time.sleep(0.2)
-  currentMenu.display(optionsMenuFlag)
+    currentMenu.display(True)
+
