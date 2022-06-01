@@ -45,10 +45,14 @@ def read_LCD_buttons():
     return btnRIGHT
 
 def updateTimeTask():
-  p1 = subprocess.run("date +%x", shell=True, capture_output=True, text=True)
-  p2 = subprocess.run("date +%T", shell=True, capture_output=True, text=True)
-  timevalbox.setMessage(p1.stdout)
-  datevalbox.setMessage(p2.stdout)
+  try:
+    p1 = subprocess.run("date +%x", shell=True, capture_output=True, text=True)
+    p2 = subprocess.run("date +%T", shell=True, capture_output=True, text=True)
+    timevalbox.setMessage(p1.stdout)
+    datevalbox.setMessage(p2.stdout)
+  except Exception as e:
+    print("Update time and date is broken")
+    print(e)
 
 def updateSystemctl():
   try:
@@ -62,17 +66,19 @@ def updateSystemctl():
   except subprocess.CalledProcessError:
     ntpvalbox.setMessage("Failed")
 
-menuList = []
+mainMenuList = []
 menuIndex = 0
-def menuLoop():
+def menuLoop(direction):
   global menuIndex
-  if menuIndex < len(menuList)-1:
-    menuIndex = menuIndex+1
-  else:
+  menuIndex = menuIndex + direction
+  if menuIndex > len(mainMenuList)-1:
     menuIndex = 0
+  if menuIndex < 0:
+    menuIndex = len(mainMenuList)-1
+  
 #setting up menu stuff
 
-timeMenu = Menu()
+timeMenu = Menu("timeMenu")
 timebox = Printbox(0, 0, 7)# line, begin, end
 datebox = Printbox(1, 0, 7)# line, begin, end
 datevalbox = Printbox(0, 8, 15)
@@ -84,7 +90,7 @@ timeMenu.addPrintbox(datebox)
 timeMenu.addPrintbox(timevalbox)
 timeMenu.addPrintbox(datevalbox)
 
-systemctlMenu = Menu()
+systemctlMenu = Menu("systemctlMenu")
 tbbox = Printbox(0, 0, 9)
 ntpbox = Printbox(1, 0, 9)
 tbboxvalbox = Printbox(0, 10, 15)
@@ -97,17 +103,27 @@ systemctlMenu.addPrintbox(tbboxvalbox)
 systemctlMenu.addPrintbox(ntpvalbox)
 
 #menu order
-menuList.append(timeMenu)
-menuList.append(systemctlMenu)
+mainMenuList.append(timeMenu)
+mainMenuList.append(systemctlMenu)
 
 #task stuff
 schedule.every(1).seconds.do(updateTimeTask).tag('menuTask')
 schedule.every(10).seconds.do(updateSystemctl).tag('menuTask')
-schedule.every(5).seconds.do(menuLoop).tag('menuTask')
+schedule.every(6).seconds.do(menuLoop, 1)
 
 #main loop
+updateSystemctl()
+updateTimeTask()
 while True:
   schedule.run_pending()
-  menuList[menuIndex].display()
+  currentMenu = mainMenuList[menuIndex]
+  currentMenu.display()
+  if currentMenu in mainMenuList: #cycle throug main menu
+    if read_LCD_buttons() == btnRIGHT: #skip to next menu
+      menuLoop(1)   
+      time.sleep(0.1)
+    if read_LCD_buttons() == btnLEFT: #previous menu
+      menuLoop(-1)  
+      time.sleep(0.1)
 
 
