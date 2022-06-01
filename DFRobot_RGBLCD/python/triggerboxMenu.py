@@ -78,7 +78,6 @@ def menuLoop(direction):
     if menuIndex < 0:
       menuIndex = len(mainMenuList)-1
 
-
 #setting up menu stuff
 
 timeMenu = Menu()
@@ -93,7 +92,16 @@ timeMenu.addPrintbox(datebox)
 timeMenu.addPrintbox(timevalbox)
 timeMenu.addPrintbox(datevalbox)
 
+#options for systemctl menu
+systemctlOptions = ScrollMenu()
+restartNTP = Option("Restart NTP")
+restartTrigbox = Option("Restart T-box")
+systemctlOptions.addOptions(restartNTP)
+systemctlOptions.addOptions(restartTrigbox)
+
+#systemctl menu
 systemctlMenu = Menu()
+systemctlMenu.setOptionsMenu(systemctlOptions)
 tbbox = Printbox(0, 0, 9)
 ntpbox = Printbox(1, 0, 9)
 tbboxvalbox = Printbox(0, 10, 15)
@@ -107,9 +115,14 @@ systemctlMenu.addPrintbox(ntpvalbox)
 
 flashMenu = Menu()
 l1box = Printbox(0, 0, 15)
-l2box = Printbox(0, 1, 15)
+l2box = Printbox(1, 0, 15)
 flashMenu.addPrintbox(l1box)
 flashMenu.addPrintbox(l2box)
+def flash(line1, line2):
+  l1box.setMessage(line1)
+  l2box.setMessage(line2)
+  flashMenu.display()
+  time.sleep(1.5)
 
 #menu order
 mainMenuList.append(timeMenu)
@@ -126,7 +139,6 @@ updateTimeTask()
 while True:
   schedule.run_pending()
   currentMenu = mainMenuList[menuIndex]
-  currentMenu.display()
   if currentMenu in mainMenuList: #cycle throug main menu
     if read_LCD_buttons() == btnRIGHT: #skip to next menu
       looping = True # resume the main menu loop
@@ -136,9 +148,12 @@ while True:
       looping = True # resume the main menu loop
       menuLoop(-1)   
       time.sleep(0.2)
-    if read_LCD_buttons() == btnSELECT: 
+    if read_LCD_buttons() == btnSELECT:
+      if looping == False:
+        options = currentMenu.getOptionsMenu()
+        options.setSelector(0)
+        options.display()
+        time.sleep(3)
       looping = False #freezes the menu for monitoring or further action
-
-
-
-
+      flash("Monitoring menu", "Use <> to resume")
+  currentMenu.display()
