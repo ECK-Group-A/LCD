@@ -2,7 +2,9 @@ import sys
 sys.path.append('.')
 import RPi.GPIO as GPIO
 import rgb1602
+import subprocess
 from Printbox import *
+
 lcd = rgb1602.RGB1602(16,2)
 
 def isNaN(num):
@@ -65,14 +67,17 @@ class Option:
       return self.value
 
   def addCommand(self, command):
-    commands.append(command)
+    self.commands.append(command)
 
   def execute(self):
+    if len(self.commands) == 0:
+      return False
     for command in self.commands:
       try:
         subprocess.run(command, shell=True, check=True)
       except subprocess.CalledProcessError:
         pass
+    return True
     
 class ScrollMenu(Menu):
   def __init__(self):
@@ -81,7 +86,8 @@ class ScrollMenu(Menu):
     self.index = 0
     self.selectorLine = 0
     self.selector = Printbox(0 , 15, 15)
-    self.selector.setMessage("<")
+    self.selectorIcon = "<"
+    self.selector.setMessage(self.selectorIcon)
     self.options = [Option(" ")]
 
   def addOptions(self, option):
@@ -89,6 +95,9 @@ class ScrollMenu(Menu):
 
   def select(self):
     return self.options[self.index + self.selectorLine]
+
+  def setSelectorIcon(self, char):
+    self.selectorIcon = char
 
   def setSelector(self, increment):
     #user wants to scroll down
@@ -119,7 +128,7 @@ class ScrollMenu(Menu):
     
     self.selector.setMessage(" ")
     self.selector.display()
-    self.selector.setMessage("<")
+    self.selector.setMessage(self.selectorIcon)
     self.selector.setLine(self.selectorLine)
     self.l1.setMessage(self.options[self.index].name)
     self.l2.setMessage(self.options[self.index+1].name)

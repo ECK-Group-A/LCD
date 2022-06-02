@@ -19,6 +19,7 @@ btnDOWN   = 2
 btnLEFT   = 3
 btnSELECT = 4
 
+#gpio for buttons
 GPIO.setup(16, GPIO.IN)
 GPIO.setup(17, GPIO.IN)
 GPIO.setup(18, GPIO.IN)
@@ -44,6 +45,7 @@ def read_LCD_buttons():
   if (key_in20 == 1):
     return btnRIGHT
 
+#scheduler task to update time
 def updateTimeTask():
   try:
     p1 = subprocess.run("date +%x", shell=True, capture_output=True, text=True)
@@ -54,6 +56,7 @@ def updateTimeTask():
     print("Update time and date is broken")
     print(e)
 
+#scheduler taskt o update systemctl
 def updateSystemctlTask():
   try:
     subprocess.run("systemctl is-active --quiet triggerbox", shell=True, check=True)
@@ -66,6 +69,7 @@ def updateSystemctlTask():
   except subprocess.CalledProcessError:
     ntpvalbox.setMessage("Failed")
 
+#some 'globals' for the menuloop task
 mainMenuList = []
 optionsMenuList = []
 menuIndex = 0
@@ -98,6 +102,8 @@ timeMenu.addPrintbox(datevalbox)
 systemctlOptions = ScrollMenu()
 restartNTP = Option("Restart NTP")
 restartTrigbox = Option("Restart T-box")
+restartNTP.addCommand("sudo systemctl restart ntp")
+restartTrigbox.addCommand("sudo systemctl restart triggerbox")
 systemctlOptions.addOptions(restartNTP)
 systemctlOptions.addOptions(restartTrigbox)
 
@@ -122,7 +128,7 @@ with open(cameraAnglesFile,"r") as file:
     lines = file.readlines()
     for line in lines:
       strippedLine = line.strip()
-      if  not strippedLine[0] == '#': 
+      if strippedLine.isnumeric(): 
         cameraAngles.append(int(strippedLine))
 file.close()
 
@@ -177,13 +183,14 @@ schedule.every(1).seconds.do(updateTimeTask).tag('menuTask')
 schedule.every(10).seconds.do(updateSystemctlTask).tag('menuTask')
 schedule.every(6).seconds.do(menuLoop, 1)
 
-#main loop
+#main loop vars and inits
 updateSystemctlTask()
 updateTimeTask()
 optionsMenuFlag = False
 mainMenuFlag = True
 optionSelectedFlag = False
 
+#loop
 while True:
   schedule.run_pending()
   currentMenu = mainMenuList[menuIndex]
@@ -206,6 +213,7 @@ while True:
       if loopingFlag == False:
         flash("Showing options", "Use <> to return")
         options = currentMenu.getScrollMenu()
+        options.setSelectorIcon("<")
         options.setSelector(0)
         optionsMenuFlag = True
         mainMenuFlag = False
@@ -241,13 +249,26 @@ while True:
     currentMenu.display(True)
 
     if read_LCD_buttons() == btnSELECT:
-      optionSelectedFlag = True
-      optionsMenuFlag = False
-      time.sleep(0.2)
-      continue
+      #is there something to execute?
+      selected = options.select()
+      success = selected.execute()
+      if success:
+        options.setSelector(0)
+        time.sleep(0.2)
 
+      #if there is nothing to execute instead select the option and change state
+      else:
+        optionSelectedFlag = True
+        optionsMenuFlag = False
+        options.setSelectorIcon("*")
+        options.setSelector(0)
+        time.sleep(0.2)
+        continue
+
+
+  #option selected state
   if optionSelectedFlag == True:
-    selected = currentMenu.scrollMenu.select()
+    selected = options.select()
 
     #only needed when adjusting values
     if read_LCD_buttons() == btnLEFT:
@@ -264,6 +285,8 @@ while True:
     if read_LCD_buttons() == btnSELECT:
       optionsMenuFlag = True
       optionSelectedFlag = False
+      options.setSelectorIcon("<")
+      options.setSelector(0)
       time.sleep(0.2)
       continue
 

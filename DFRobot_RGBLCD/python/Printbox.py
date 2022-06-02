@@ -4,6 +4,24 @@ import RPi.GPIO as GPIO
 import rgb1602
 lcd = rgb1602.RGB1602(16,2)
 
+#custom symbol
+filledSelector = [
+  0b00010,
+  0b00110,
+  0b01110,
+  0b11110,
+  0b01110,
+  0b00110,
+  0b00010,
+  0b00000
+]
+lcd.customSymbol(0, filledSelector)
+
+#replaces unneeded characters with custom ones
+charDict = {
+  "*": 0
+}
+
 class Printbox:
     def __init__(self, line, begin, end):
         if begin > 15 or end > 15:
@@ -36,8 +54,17 @@ class Printbox:
     def getMessage(self):
         return self.message[0:self.end+1]
 
-    def display(self):
+    def display(self): 
+        strings = []
+        message = self.message[0:self.end+1]
         lcd.setCursor(self.begin, self.line)
-        lcd.printout(self.message[0:self.end+1])
+        for key, val in charDict.items():
+            if message.find(key)!=-1:
+                strings = self.message[0:self.end+1].split(key)
+                lcd.printout(strings[0])
+                lcd.write(val)
+                lcd.printout(strings[1])
+            else:
+                lcd.printout(message)
 
         
