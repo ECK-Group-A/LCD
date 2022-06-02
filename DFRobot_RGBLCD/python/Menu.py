@@ -60,6 +60,10 @@ class Option:
     else:
       self.name = self.tempName + empty[0:spaceLeft] + self.valueBox.getMessage() 
 
+  def getValue(self):
+    if hasattr(self, 'value'):
+      return self.value
+
   def addCommand(self, command):
     commands.append(command)
 
@@ -120,9 +124,20 @@ class ScrollMenu(Menu):
     self.l1.setMessage(self.options[self.index].name)
     self.l2.setMessage(self.options[self.index+1].name)
 
-  def update(self):
+  def update(self, fileName):
     self.l1.setMessage(self.options[self.index].name)
-    self.l2.setMessage(self.options[self.index+1].name)    
+    self.l2.setMessage(self.options[self.index+1].name) 
+
+    values = []
+    for option in self.options:
+      value = option.getValue()
+      if not isNaN(value) or value == "None":
+        values.append(str(value) + '\n')
+
+    with open(fileName,"w") as file:
+      file.writelines(values)
+
+    file.close()
 
   def display(self):
     self.l1.display()

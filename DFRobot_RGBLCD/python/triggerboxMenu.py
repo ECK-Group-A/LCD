@@ -98,10 +98,8 @@ timeMenu.addPrintbox(datevalbox)
 systemctlOptions = ScrollMenu()
 restartNTP = Option("Restart NTP")
 restartTrigbox = Option("Restart T-box")
-adjustCamera1 = Option("C1 Angle", 360, 1, 360.0, 0, 3)
 systemctlOptions.addOptions(restartNTP)
 systemctlOptions.addOptions(restartTrigbox)
-systemctlOptions.addOptions(adjustCamera1)
 
 #systemctl menu
 systemctlMenu = Menu()
@@ -117,20 +115,31 @@ systemctlMenu.addPrintbox(ntpbox)
 systemctlMenu.addPrintbox(tbboxvalbox)
 systemctlMenu.addPrintbox(ntpvalbox)
 
+#settings file
+cameraAnglesFile = "cameraAngles"
+cameraAngles = []
+with open(cameraAnglesFile,"r") as file:
+    lines = file.readlines()
+    for line in lines:
+      strippedLine = line.strip()
+      if  not strippedLine[0] == '#': 
+        cameraAngles.append(int(strippedLine))
+file.close()
+
 #camera scroll menu
 cameraOptions = ScrollMenu()
-adjustCamera1 = Option("C1 Angle", 0.0, 1.0, 360, 0, 5)
-adjustCamera2 = Option("C2 Angle", 60.0, 1.0, 360, 0, 5)
-adjustCamera3 = Option("C3 Angle", 180.0, 1.0, 360, 0, 5)
-adjustCamera4 = Option("C4 Angle", 240.0, 1.0, 360, 0, 5)
-adjustCamera5 = Option("C5 Angle", 300.0, 1.0, 360, 0, 5)
-adjustCamera6 = Option("C6 Angle", 360.0, 1.0, 360, 0, 5)
-cameraOptions.addOptions(adjustCamera1)
-cameraOptions.addOptions(adjustCamera2)
-cameraOptions.addOptions(adjustCamera3)
-cameraOptions.addOptions(adjustCamera4)
-cameraOptions.addOptions(adjustCamera5)
+adjustCamera1 = Option("Cam 1 Angle", cameraAngles[0], 1, 360, 0, 3)
+adjustCamera2 = Option("Cam 2 Angle", cameraAngles[1], 1, 360, 0, 3)
+adjustCamera3 = Option("Cam 3 Angle", cameraAngles[2], 1, 360, 0, 3)
+adjustCamera4 = Option("Cam 4 Angle", cameraAngles[3], 1, 360, 0, 3)
+adjustCamera5 = Option("Cam 5 Angle", cameraAngles[4], 1, 360, 0, 3)
+adjustCamera6 = Option("Cam 6 Angle", cameraAngles[5], 1, 360, 0, 3)
 cameraOptions.addOptions(adjustCamera6)
+cameraOptions.addOptions(adjustCamera5)
+cameraOptions.addOptions(adjustCamera4)
+cameraOptions.addOptions(adjustCamera3)
+cameraOptions.addOptions(adjustCamera2)
+cameraOptions.addOptions(adjustCamera1)
 
 #camera menu
 cameraMenu = Menu()
@@ -240,13 +249,16 @@ while True:
   if optionSelectedFlag == True:
     selected = currentMenu.scrollMenu.select()
 
+    #only needed when adjusting values
     if read_LCD_buttons() == btnLEFT:
       selected.incrementValue(-1)
+      currentMenu.scrollMenu.update(cameraAnglesFile)
       time.sleep(0.2)
 
+    #only needed when adjusting values
     if read_LCD_buttons() == btnRIGHT:
       selected.incrementValue(1)
-      currentMenu.scrollMenu.update()
+      currentMenu.scrollMenu.update(cameraAnglesFile)
       time.sleep(0.2)
 
     if read_LCD_buttons() == btnSELECT:
@@ -256,3 +268,5 @@ while True:
       continue
 
     currentMenu.display(True)
+
+    
