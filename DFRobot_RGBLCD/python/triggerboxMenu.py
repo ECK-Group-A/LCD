@@ -62,12 +62,12 @@ def updateSystemctlTask():
     subprocess.run("systemctl is-active --quiet triggerbox", shell=True, check=True)
     tbboxvalbox.setMessage("Active")
   except subprocess.CalledProcessError:
-    tbboxvalbox.setMessage("Failed")
+    tbboxvalbox.setMessage("Down")
   try:
     subprocess.run("systemctl is-active --quiet chrony", shell=True, check=True)
     chronyvalbox.setMessage("Active")
   except subprocess.CalledProcessError:
-    chronyvalbox.setMessage("Failed")
+    chronyvalbox.setMessage("Down")
 
 #some 'globals' for the menuloop task
 mainMenuList = []
@@ -103,6 +103,7 @@ systemctlOptions = ScrollMenu()
 restartChrony = Option("Restart Chrony")
 restartTrigbox = Option("Restart T-box")
 restartChrony.addCommand("sudo systemctl restart chrony")
+restartChrony.execute()
 restartTrigbox.addCommand("sudo systemctl daemon-reload")
 restartTrigbox.addCommand("sudo systemctl restart triggerbox")
 systemctlOptions.addOptions(restartChrony)
@@ -142,13 +143,13 @@ adjustCamera3 = Option("Cam 3 Angle", cameraAngles[2], 1, 360, 0, 3)
 adjustCamera4 = Option("Cam 4 Angle", cameraAngles[3], 1, 360, 0, 3)
 adjustCamera5 = Option("Cam 5 Angle", cameraAngles[4], 1, 360, 0, 3)
 adjustCamera6 = Option("Cam 6 Angle", cameraAngles[5], 1, 360, 0, 3)
-cameraOptions.addOptions(restartTrigbox)
 cameraOptions.addOptions(adjustCamera6)
 cameraOptions.addOptions(adjustCamera5)
 cameraOptions.addOptions(adjustCamera4)
 cameraOptions.addOptions(adjustCamera3)
 cameraOptions.addOptions(adjustCamera2)
 cameraOptions.addOptions(adjustCamera1)
+cameraOptions.addOptions(restartTrigbox)
 
 #camera menu
 cameraMenu = Menu()
@@ -183,7 +184,7 @@ optionsMenuList.append
 
 #task stuff
 schedule.every(1).seconds.do(updateTimeTask).tag('menuTask')
-schedule.every(10).seconds.do(updateSystemctlTask).tag('menuTask')
+schedule.every(5).seconds.do(updateSystemctlTask).tag('menuTask')
 schedule.every(6).seconds.do(menuLoop, 1)
 
 #main loop vars and inits
