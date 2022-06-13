@@ -64,10 +64,10 @@ def updateSystemctlTask():
   except subprocess.CalledProcessError:
     tbboxvalbox.setMessage("Failed")
   try:
-    subprocess.run("systemctl is-active --quiet ntp", shell=True, check=True)
-    ntpvalbox.setMessage("Active")
+    subprocess.run("systemctl is-active --quiet chrony", shell=True, check=True)
+    chronyvalbox.setMessage("Active")
   except subprocess.CalledProcessError:
-    ntpvalbox.setMessage("Failed")
+    chronyvalbox.setMessage("Failed")
 
 #some 'globals' for the menuloop task
 mainMenuList = []
@@ -100,34 +100,36 @@ timeMenu.addPrintbox(datevalbox)
 
 #options for systemctl menu
 systemctlOptions = ScrollMenu()
-restartNTP = Option("Restart NTP")
+restartChrony = Option("Restart Chrony")
 restartTrigbox = Option("Restart T-box")
-restartNTP.addCommand("sudo systemctl restart ntp")
+restartChrony.addCommand("sudo systemctl restart chrony")
+restartTrigbox.addCommand("sudo systemctl daemon-reload")
 restartTrigbox.addCommand("sudo systemctl restart triggerbox")
-systemctlOptions.addOptions(restartNTP)
+systemctlOptions.addOptions(restartChrony)
 systemctlOptions.addOptions(restartTrigbox)
 
 #systemctl menu
 systemctlMenu = Menu()
 systemctlMenu.setScrollMenu(systemctlOptions)
 tbbox = Printbox(0, 0, 9)
-ntpbox = Printbox(1, 0, 9)
+chronybox = Printbox(1, 0, 9)
 tbboxvalbox = Printbox(0, 10, 15)
-ntpvalbox = Printbox(1, 10, 15)
+chronyvalbox = Printbox(1, 10, 15)
 tbbox.setMessage("Trigbox:")
-ntpbox.setMessage("NTP:")
+chronybox.setMessage("Chrony:")
 systemctlMenu.addPrintbox(tbbox)
-systemctlMenu.addPrintbox(ntpbox)
+systemctlMenu.addPrintbox(chronybox)
 systemctlMenu.addPrintbox(tbboxvalbox)
-systemctlMenu.addPrintbox(ntpvalbox)
+systemctlMenu.addPrintbox(chronyvalbox)
 
 #settings file
-cameraAnglesFile = "cameraAngles"
+cameraAnglesFile = "/etc/triggerbox.conf"
 cameraAngles = []
 with open(cameraAnglesFile,"r") as file:
     lines = file.readlines()
     for line in lines:
       strippedLine = line.strip()
+      strippedLine = strippedLine[3:]
       if strippedLine.isnumeric(): 
         cameraAngles.append(int(strippedLine))
 file.close()
@@ -140,6 +142,7 @@ adjustCamera3 = Option("Cam 3 Angle", cameraAngles[2], 1, 360, 0, 3)
 adjustCamera4 = Option("Cam 4 Angle", cameraAngles[3], 1, 360, 0, 3)
 adjustCamera5 = Option("Cam 5 Angle", cameraAngles[4], 1, 360, 0, 3)
 adjustCamera6 = Option("Cam 6 Angle", cameraAngles[5], 1, 360, 0, 3)
+cameraOptions.addOptions(restartTrigbox)
 cameraOptions.addOptions(adjustCamera6)
 cameraOptions.addOptions(adjustCamera5)
 cameraOptions.addOptions(adjustCamera4)

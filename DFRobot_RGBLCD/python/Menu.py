@@ -138,10 +138,12 @@ class ScrollMenu(Menu):
     self.l2.setMessage(self.options[self.index+1].name) 
 
     values = []
+    count = 1
     for option in self.options:
       value = option.getValue()
-      if not isNaN(value) or value == "None":
-        values.append(str(value) + '\n')
+      if count < 7 and not isNaN(value):
+        values.append("C" + str(count) + "=" + str(value) + '\n')
+      count+=1
 
     with open(fileName,"w") as file:
       file.writelines(values)
