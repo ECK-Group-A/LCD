@@ -141,9 +141,9 @@ class ScrollMenu(Menu):
     count = 1
     for option in self.options:
       value = option.getValue()
-      if count < 7 and not isNaN(value):
+      if count < 7 and not isNaN(value) and not value == None:
         values.append("C" + str(count) + "=" + str(value) + '\n')
-      count+=1
+        count+=1
 
     with open(fileName,"w") as file:
       file.writelines(values)
